@@ -2,9 +2,10 @@ import { Injectable, NgZone, computed, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { io, Socket } from 'socket.io-client';
 import { map, tap } from 'rxjs';
+import { environment } from '../environments/environment';
 
-export const API_BASE = 'http://localhost:5000/api';
-export const SOCKET_URL = 'http://localhost:5000';
+export const API_BASE = environment.apiBase;
+export const SOCKET_URL = environment.socketUrl;
 
 export type Role = 'manager' | 'team_lead' | 'employee';
 export type TaskStatus = 'pending' | 'completed';
