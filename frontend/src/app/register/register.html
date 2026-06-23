@@ -1,0 +1,95 @@
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h1 class="auth-title">Create account</h1>
+    <p class="auth-sub">Set up your profile to get started</p>
+
+    @if (errorMsg()) {
+      <div class="alert alert-error">{{ errorMsg() }}</div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="field">
+        <label for="username">Username</label>
+        <input
+          id="username"
+          type="text"
+          formControlName="username"
+          placeholder="Jane Doe"
+          [class.invalid]="form.controls.username.touched && form.controls.username.invalid"
+        />
+        @if (form.controls.username.touched && form.controls.username.invalid) {
+          <span class="error">Username must be at least 3 characters</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          placeholder="you@example.com"
+          [class.invalid]="form.controls.email.touched && form.controls.email.invalid"
+        />
+        @if (form.controls.email.touched && form.controls.email.invalid) {
+          <span class="error">Enter a valid email address</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          placeholder="At least 6 characters"
+          [class.invalid]="form.controls.password.touched && form.controls.password.invalid"
+        />
+        @if (form.controls.password.touched && form.controls.password.invalid) {
+          <span class="error">Password must be at least 6 characters</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="role">Role</label>
+        <select id="role" formControlName="role">
+          <option value="employee">Employee</option>
+          <option value="team_lead">Team Lead</option>
+          <option value="manager">Manager</option>
+        </select>
+      </div>
+
+      @if (role === 'employee' && leads().length) {
+        <div class="field">
+          <label for="lead">Reports to (Team Lead)</label>
+          <select id="lead" formControlName="managerId">
+            <option value="">— None —</option>
+            @for (l of leads(); track l._id) {
+              <option [value]="l._id">{{ l.username }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      @if (role === 'team_lead' && managers().length) {
+        <div class="field">
+          <label for="mgr">Reports to (Manager)</label>
+          <select id="mgr" formControlName="managerId">
+            <option value="">— None —</option>
+            @for (m of managers(); track m._id) {
+              <option [value]="m._id">{{ m.username }}</option>
+            }
+          </select>
+        </div>
+      }
+
+      <button class="btn btn-block" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Creating…' : 'Create account' }}
+      </button>
+    </form>
+
+    <p class="auth-foot">
+      Already have an account? <a routerLink="/login">Sign in</a>
+    </p>
+  </div>
+</div>

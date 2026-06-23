@@ -1,0 +1,21 @@
+<header class="topbar">
+  <a class="brand" routerLink="/dashboard">
+    <span class="brand-icon">T</span>
+    TaskFlow
+  </a>
+
+  @if (api.isLoggedIn()) {
+    <div class="topbar-right">
+      <span class="role-pill">{{ roleLabels[api.user()!.role] }}</span>
+      <div class="topbar-user">
+        <span class="topbar-avatar">{{ api.user()!.username.charAt(0) }}</span>
+        <span class="user-name">{{ api.user()?.username }}</span>
+      </div>
+      <button class="btn-ghost btn-sm" (click)="logout()">Logout</button>
+    </div>
+  }
+</header>
+
+<main class="content">
+  <router-outlet />
+</main>

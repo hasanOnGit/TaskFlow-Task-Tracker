@@ -1,0 +1,318 @@
+<div class="layout" [class.has-nav]="hasSidebar()">
+  @if (isManager()) {
+    <aside class="nav">
+      <p class="nav-label">Menu</p>
+      <div class="nav-links">
+        <button class="nav-item" [class.active]="managerTab() === 'teams'" (click)="setManagerTab('teams')" title="Teams">
+          <span class="nav-icon">▸</span>
+          <span class="nav-text">Teams</span>
+        </button>
+        <button class="nav-item" [class.active]="managerTab() === 'tasks'" (click)="setManagerTab('tasks')" title="All Tasks">
+          <span class="nav-icon">☰</span>
+          <span class="nav-text">All Tasks</span>
+        </button>
+        <button class="nav-item" [class.active]="managerTab() === 'users'" (click)="setManagerTab('users')" title="People">
+          <span class="nav-icon">◉</span>
+          <span class="nav-text">People</span>
+        </button>
+      </div>
+    </aside>
+  }
+  @if (isTeamLead()) {
+    <aside class="nav">
+      <p class="nav-label">Menu</p>
+      <div class="nav-links">
+        <button class="nav-item" [class.active]="leadTab() === 'tasks'" (click)="setLeadTab('tasks')" title="Tasks">
+          <span class="nav-icon">☰</span>
+          <span class="nav-text">Tasks</span>
+        </button>
+        <button class="nav-item" [class.active]="leadTab() === 'team'" (click)="setLeadTab('team')" title="Team">
+          <span class="nav-icon">◉</span>
+          <span class="nav-text">Team</span>
+        </button>
+      </div>
+    </aside>
+  }
+
+  <main class="main">
+    <header class="page-top">
+      <div>
+        <p class="eyebrow">{{ activeTabLabel() }}</p>
+        <h1>Welcome, {{ api.user()?.username }}</h1>
+      </div>
+      <button class="btn" (click)="openCreate()">+ New Task</button>
+    </header>
+
+    @if (errorMsg()) {
+      <div class="alert alert-error">{{ errorMsg() }}</div>
+    }
+
+    @if (isEmployee() || (isManager() && (managerTab() === 'tasks' || managerTab() === 'teams')) || (isTeamLead() && leadTab() === 'tasks')) {
+      <div class="stats">
+        <div class="stat"><span class="stat-val">{{ tasks().length }}</span><span class="stat-lbl">Total</span></div>
+        <div class="stat warn"><span class="stat-val">{{ pendingCount() }}</span><span class="stat-lbl">Pending</span></div>
+        <div class="stat ok"><span class="stat-val">{{ completedCount() }}</span><span class="stat-lbl">Done</span></div>
+        <div class="stat accent"><span class="stat-val">{{ completionRate() }}%</span><span class="stat-lbl">Progress</span></div>
+      </div>
+    }
+
+    @if (isEmployee() || (isManager() && managerTab() === 'tasks')) {
+      <section class="card">
+        <div class="card-bar">
+          <h2>Tasks</h2>
+          <div class="card-tools">
+            <div class="seg">
+              <button class="seg-btn" [class.on]="filter() === ''" (click)="setFilter('')">All</button>
+              <button class="seg-btn" [class.on]="filter() === 'pending'" (click)="setFilter('pending')">Pending</button>
+              <button class="seg-btn" [class.on]="filter() === 'completed'" (click)="setFilter('completed')">Done</button>
+            </div>
+          </div>
+        </div>
+
+        @if (loading()) {
+          <div class="loading">Loading tasks…</div>
+        } @else if (tasks().length === 0) {
+          <div class="empty"><p>No tasks yet.</p><button class="btn btn-sm" (click)="openCreate()">Create task</button></div>
+        } @else {
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Task</th>
+                  <th>Assignee</th>
+                  <th>Status</th>
+                  <th>Updated</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (task of tasks(); track task._id) {
+                  <tr class="data-row" [class.done]="task.status === 'completed'">
+                    <td data-label="">
+                      <button class="check" [class.on]="task.status === 'completed'" (click)="toggleStatus(task)"></button>
+                    </td>
+                    <td data-label="Task">
+                      <span class="t-title">{{ task.title }}</span>
+                      @if (task.description) { <span class="t-sub">{{ task.description }}</span> }
+                    </td>
+                    <td data-label="Assignee">
+                      <span class="assignee-name">
+                        {{ task.assignedTo.username }}
+                        @if (!isEmployee() && task.assignedTo._id === api.user()?._id) {
+                          <span class="tag you">You</span>
+                        }
+                      </span>
+                    </td>
+                    <td data-label="Status">
+                      <span class="tag" [class.pending]="task.status === 'pending'" [class.completed]="task.status === 'completed'">{{ task.status }}</span>
+                    </td>
+                    <td data-label="Updated" class="muted">{{ task.updatedAt | date: 'MMM d, y' }}</td>
+                    <td data-label="Actions" class="actions">
+                      <button class="icon-btn" (click)="openEdit(task)" title="Edit">✎</button>
+                      @if (canDelete()) {
+                        <button class="icon-btn danger" (click)="remove(task)" title="Delete">✕</button>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+
+    @if (isTeamLead() && leadTab() === 'tasks') {
+      <section class="card">
+        <div class="card-bar">
+          <h2>Team Tasks</h2>
+          <div class="card-tools">
+            <select class="select" [value]="memberFilter()" (change)="setMemberFilter($any($event.target).value)">
+              <option value="">All members</option>
+              @for (m of teamMembers(); track m._id) {
+                <option [value]="m._id">{{ m.username }}</option>
+              }
+            </select>
+            <div class="seg">
+              <button class="seg-btn" [class.on]="filter() === ''" (click)="setFilter('')">All</button>
+              <button class="seg-btn" [class.on]="filter() === 'pending'" (click)="setFilter('pending')">Pending</button>
+              <button class="seg-btn" [class.on]="filter() === 'completed'" (click)="setFilter('completed')">Done</button>
+            </div>
+          </div>
+        </div>
+
+        @if (loading()) {
+          <div class="loading">Loading tasks…</div>
+        } @else if (!hasMemberTasks()) {
+          <div class="empty"><p>No tasks for this filter.</p></div>
+        } @else {
+          <div class="accordion">
+            @for (group of memberTaskGroups(); track group.member._id) {
+              @if (group.tasks.length > 0) {
+                <div class="acc" [class.open]="expandedMemberId() === group.member._id">
+                  <button type="button" class="acc-head" (click)="toggleMemberPanel(group.member._id)">
+                    <span class="acc-chevron"></span>
+                    <span class="avatar" [class]="roleClass(group.member.role)">{{ initials(group.member.username) }}</span>
+                    <span class="acc-title">{{ group.member.username }}</span>
+                    @if (group.member._id === api.user()?._id) {
+                      <span class="tag you">You</span>
+                    }
+                    <span class="acc-meta">{{ roleLabels[group.member.role] }}</span>
+                    <span class="acc-count">{{ group.tasks.length }}</span>
+                  </button>
+                  <div class="acc-body">
+                    <ul class="task-rows">
+                      @for (task of group.tasks; track task._id) {
+                        <li class="task-item" [class.done]="task.status === 'completed'">
+                          <button class="check" [class.on]="task.status === 'completed'" (click)="toggleStatus(task)"></button>
+                          <div class="task-body">
+                            <span class="t-title">{{ task.title }}</span>
+                            <span class="t-sub">{{ task.updatedAt | date: 'MMM d' }} · {{ task.status }}</span>
+                          </div>
+                          <span class="tag sm" [class.pending]="task.status === 'pending'" [class.completed]="task.status === 'completed'">{{ task.status }}</span>
+                          <button class="icon-btn" (click)="openEdit(task)">✎</button>
+                          @if (canDelete()) { <button class="icon-btn danger" (click)="remove(task)">✕</button> }
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        }
+      </section>
+    }
+
+    @if (isManager() && managerTab() === 'teams') {
+      <section class="card">
+        <div class="card-bar">
+          <h2>Team Leads</h2>
+          <span class="hint">Expand a team to manage tasks</span>
+        </div>
+
+        @if (leadGroups().length === 0) {
+          <div class="empty"><p>No team leads found.</p></div>
+        } @else {
+          <div class="accordion">
+            @for (group of leadGroups(); track group.lead._id) {
+              <div class="acc" [class.open]="expandedLeadId() === group.lead._id">
+                <button type="button" class="acc-head" (click)="toggleLeadPanel(group.lead._id)">
+                  <span class="acc-chevron"></span>
+                  <span class="avatar" [class]="roleClass(group.lead.role)">{{ initials(group.lead.username) }}</span>
+                  <span class="acc-title">{{ group.lead.username }}</span>
+                  <span class="acc-meta">{{ group.lead.email }}</span>
+                  <span class="acc-count">{{ group.tasks.length }} tasks</span>
+                </button>
+                <div class="acc-body">
+                  @if (group.tasks.length === 0) {
+                    <p class="muted pad">No tasks in this team.</p>
+                  } @else {
+                    <ul class="task-rows">
+                      @for (task of group.tasks; track task._id) {
+                        <li class="task-item" [class.done]="task.status === 'completed'">
+                          <button class="check" [class.on]="task.status === 'completed'" (click)="toggleStatus(task)"></button>
+                          <div class="task-body">
+                            <span class="t-title">{{ task.title }}</span>
+                            <span class="t-sub">{{ task.assignedTo.username }} · {{ task.status }}</span>
+                          </div>
+                          <select class="select sm" [value]="task.assignedTo._id" (change)="reassignTask(task, $any($event.target).value)">
+                            @for (u of assignableUsers(); track u._id) {
+                              <option [value]="u._id">{{ u.username }}</option>
+                            }
+                          </select>
+                          <button class="icon-btn" (click)="openEdit(task)">✎</button>
+                        </li>
+                      }
+                    </ul>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    @if ((isManager() && managerTab() === 'users') || (isTeamLead() && leadTab() === 'team')) {
+      <section class="card">
+        <div class="card-bar"><h2>People</h2></div>
+        <div class="accordion">
+          @for (group of peopleGroups(); track group.role) {
+            <div class="acc" [class.open]="expandedRole() === group.role">
+              <button type="button" class="acc-head" (click)="toggleRolePanel(group.role)">
+                <span class="acc-chevron"></span>
+                <span class="acc-title">{{ group.label }}</span>
+                <span class="acc-count">{{ group.users.length }}</span>
+              </button>
+              <div class="acc-body">
+                <ul class="people-rows">
+                  @for (u of group.users; track u._id) {
+                    <li class="people-item">
+                      <span class="avatar sm" [class]="roleClass(u.role)">{{ initials(u.username) }}</span>
+                      <div>
+                        <span class="p-name">{{ u.username }}</span>
+                        <span class="p-email">{{ u.email }}</span>
+                      </div>
+                      <span class="tag role">{{ roleLabels[u.role] }}</span>
+                    </li>
+                  }
+                </ul>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    }
+  </main>
+</div>
+
+@if (showForm()) {
+  <div class="modal-overlay" (click)="closeForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h2>{{ editingId() ? 'Edit Task' : 'New Task' }}</h2>
+        <button class="modal-close" (click)="closeForm()">×</button>
+      </div>
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="field">
+          <label for="title">Title</label>
+          <input id="title" type="text" formControlName="title" placeholder="Task title"
+            [class.invalid]="form.controls.title.touched && form.controls.title.invalid" />
+          @if (form.controls.title.touched && form.controls.title.invalid) {
+            <span class="error">At least 3 characters</span>
+          }
+        </div>
+        <div class="field">
+          <label for="description">Description</label>
+          <textarea id="description" rows="2" formControlName="description" placeholder="Optional notes"></textarea>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="status">Status</label>
+            <select id="status" formControlName="status">
+              <option value="pending">Pending</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          @if (canAssign()) {
+            <div class="field">
+              <label for="assignedTo">Assign to</label>
+              <select id="assignedTo" formControlName="assignedTo">
+                <option value="">Myself</option>
+                @for (u of assignableUsers(); track u._id) {
+                  <option [value]="u._id">{{ u.username }}</option>
+                }
+              </select>
+            </div>
+          }
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" (click)="closeForm()">Cancel</button>
+          <button type="submit" class="btn" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
