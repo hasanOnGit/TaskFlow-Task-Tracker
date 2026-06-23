@@ -4,18 +4,12 @@ const cors = require("cors");
 require("dotenv").config();
 
 const { notFound, errorHandler } = require("./src/middlewares/error.middleware");
+const { getCorsOptions, logAllowedOrigins } = require("./src/config/cors.config");
 
 const app = express();
-const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || "http://localhost:4200";
 
-app.use(
-  cors({
-    origin: CLIENT_ORIGIN,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-  })
-);
+logAllowedOrigins();
+app.use(cors(getCorsOptions()));
 
 app.use(express.json());
 
