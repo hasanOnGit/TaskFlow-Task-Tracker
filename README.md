@@ -2,14 +2,6 @@
 
 A task manager built with MongoDB, Express, Angular, and Node.js. Users log in with JWT, get a role (Manager, Team Lead, or Employee), and manage tasks with live updates over Socket.io.
 
-**Live app**
-
-| | URL |
-| --- | --- |
-| Frontend | https://task-flow-task-tracker.vercel.app |
-| Backend API | https://taskflow-task-tracker.onrender.com |
-| Health check | https://taskflow-task-tracker.onrender.com/api/health |
-
 ---
 
 ## Test accounts
@@ -43,20 +35,15 @@ Run the seed script first (see below), then log in with any of these. Password i
 2. Can create, edit, and mark tasks complete.
 3. Delete is hidden — the API returns 403 if attempted.
 
-On all roles, click your **name** in the top bar to see your name and email. **Logout** is on the right (turns red on hover).
+Click your **name** in the top bar to see your name and email. **Logout** is on the right.
 
 ---
 
 ## Local setup
 
-You need Node.js 20+ and a MongoDB connection string (Atlas or local).
+You need Node.js 20+ and a MongoDB connection string.
 
-### 1. Clone and install
-
-```bash
-git clone https://github.com/hasanOnGit/TaskFlow-Task-Tracker.git
-cd TaskFlow-Task-Tracker
-```
+### 1. Install backend
 
 ```bash
 cd backend
@@ -64,7 +51,7 @@ npm install
 copy .env.example .env
 ```
 
-Edit `backend/.env` and set at least:
+Edit `backend/.env`:
 
 ```env
 MONGO_URI=mongodb+srv://...
@@ -75,11 +62,10 @@ CLIENT_ORIGIN=http://localhost:4200
 ### 2. Seed the database
 
 ```bash
-cd backend
 npm run seed
 ```
 
-This wipes existing users/tasks in that database and creates the three test accounts plus sample tasks. Safe to run again when you want a clean slate.
+Creates the three test accounts and sample tasks. Running it again clears users and tasks in that database.
 
 ### 3. Start the backend
 
@@ -87,7 +73,7 @@ This wipes existing users/tasks in that database and creates the three test acco
 npm start
 ```
 
-API runs on http://localhost:5000
+API: http://localhost:5000
 
 ### 4. Start the frontend
 
@@ -97,32 +83,7 @@ npm install
 npm start
 ```
 
-Open http://localhost:4200 and log in with one of the test accounts above.
-
-Local API URLs are in `frontend/src/environments/environment.ts`. Production URLs are in `environment.prod.ts`.
-
----
-
-## Project layout
-
-```
-Task Manager/
-├── backend/          Express API, JWT, Socket.io
-│   ├── index.js
-│   ├── seed.js
-│   └── src/
-│       ├── config/       db, socket, cors
-│       ├── controllers/  auth, users, tasks
-│       ├── helpers/      role scoping
-│       ├── middlewares/
-│       └── models/
-└── frontend/         Angular 21 app
-    └── src/app/
-        ├── api.service.ts
-        ├── auth.ts
-        ├── login/ register/
-        └── dashboard/
-```
+Open http://localhost:4200 and log in.
 
 ---
 
@@ -134,61 +95,25 @@ Task Manager/
 | Team Lead | Self + direct reports | Self + team members | Yes |
 | Employee | Own tasks | Self only (auto on create) | No |
 
-Hierarchy: Manager → Team Lead → Employee (via `manager` field on the user model).
+Hierarchy: Manager → Team Lead → Employee.
 
 ---
 
-## Deployment
-
-Single repo, two hosts:
-
-| Part | Host | Root directory |
-| --- | --- | --- |
-| Frontend | Vercel | `frontend` |
-| Backend | Render | `backend` |
-| Database | MongoDB Atlas | — |
-
-### Render (backend)
-
-- **Build command:** `npm install`
-- **Start command:** `node index.js`
-- **Environment variables:**
-
-| Variable | Example |
-| --- | --- |
-| `MONGO_URI` | Atlas connection string |
-| `JWT_SECRET` | long random string |
-| `CLIENT_ORIGIN` | `https://task-flow-task-tracker.vercel.app` (no trailing slash) |
-
-### Vercel (frontend)
-
-- **Root directory:** `frontend`
-- **Build command:** `npm run build`
-- **Output directory:** `dist/frontend/browser`
-
-Update `frontend/src/environments/environment.prod.ts` with your Render API URL before deploying.
-
-### CORS notes
-
-`CLIENT_ORIGIN` must match your Vercel URL exactly. The backend also allows `*.vercel.app` preview URLs. If login fails with a CORS error, double-check that env var on Render and redeploy.
-
----
-
-## API (quick reference)
+## API
 
 **Auth** — `/api/auth`
 
 - `POST /register` — create account
 - `POST /login` — returns `{ token, user }`
-- `GET /me` — current user (auth required)
+- `GET /me` — current user
 
-**Users** — `/api/users` (auth required)
+**Users** — `/api/users`
 
 - `GET /` — users visible to your role
 - `GET /assignable` — users you can assign tasks to
 - `GET /team-leads` — manager only
 
-**Tasks** — `/api/tasks` (auth required)
+**Tasks** — `/api/tasks`
 
 - `GET /?status=pending|completed` — list tasks
 - `POST /` — create
@@ -200,8 +125,8 @@ Update `frontend/src/environments/environment.prod.ts` with your Render API URL 
 ## Tech stack
 
 - **Backend:** Express, Mongoose, JWT, bcryptjs, Socket.io
-- **Frontend:** Angular 21, RxJS, socket.io-client
-- **Database:** MongoDB Atlas
+- **Frontend:** Angular, RxJS, socket.io-client
+- **Database:** MongoDB
 
 ---
 
