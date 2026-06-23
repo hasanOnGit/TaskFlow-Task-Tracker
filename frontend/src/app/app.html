@@ -7,11 +7,22 @@
   @if (api.isLoggedIn()) {
     <div class="topbar-right">
       <span class="role-pill">{{ roleLabels[api.user()!.role] }}</span>
-      <div class="topbar-user">
-        <span class="topbar-avatar">{{ api.user()!.username.charAt(0) }}</span>
-        <span class="user-name">{{ api.user()?.username }}</span>
+
+      <div class="user-menu" (click)="$event.stopPropagation()">
+        <button type="button" class="topbar-user" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()">
+          <span class="topbar-avatar">{{ api.user()!.username.charAt(0) }}</span>
+          <span class="user-name">{{ api.user()?.username }}</span>
+        </button>
+
+        @if (menuOpen()) {
+          <div class="user-dropdown">
+            <p class="user-dropdown-name">{{ api.user()?.username }}</p>
+            <p class="user-dropdown-email">{{ api.user()?.email }}</p>
+          </div>
+        }
       </div>
-      <button class="btn-ghost btn-sm" (click)="logout()">Logout</button>
+
+      <button type="button" class="btn-ghost btn-sm btn-logout" (click)="logout()">Logout</button>
     </div>
   }
 </header>

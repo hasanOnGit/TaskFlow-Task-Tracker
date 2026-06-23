@@ -69,7 +69,6 @@ export class Dashboard implements OnInit, OnDestroy {
   isManager = computed(() => this.api.role() === 'manager');
   isTeamLead = computed(() => this.api.role() === 'team_lead');
   isEmployee = computed(() => this.api.role() === 'employee');
-  hasSidebar = computed(() => this.isManager() || this.isTeamLead());
 
   pendingCount = computed(() => this.tasks().filter((t) => t.status === 'pending').length);
   completedCount = computed(() => this.tasks().filter((t) => t.status === 'completed').length);
@@ -129,14 +128,14 @@ export class Dashboard implements OnInit, OnDestroy {
   activeTabLabel = computed(() => {
     if (this.isManager()) {
       const labels: Record<ManagerTab, string> = {
-        tasks: 'Task Board',
-        teams: 'Team Overview',
-        users: 'People Directory',
+        tasks: 'All Tasks',
+        teams: 'Teams',
+        users: 'People',
       };
       return labels[this.managerTab()];
     }
     if (this.isTeamLead()) {
-      return this.leadTab() === 'tasks' ? 'Task Board' : 'My Team';
+      return this.leadTab() === 'tasks' ? 'Tasks' : 'Team';
     }
     return 'My Tasks';
   });

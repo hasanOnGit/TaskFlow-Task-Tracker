@@ -1,149 +1,20 @@
-# TaskFlow — MEAN Stack Task Management Application
+# TaskFlow
 
-A full-stack task management application built with the **MEAN stack** (MongoDB, Express, Angular, Node.js). It meets the machine-test requirements: JWT authentication, three-role authorization (Manager / Team Lead / Employee), task CRUD with status filtering, form validation, responsive UI, and **real-time updates via Socket.io**.
+A task manager built with MongoDB, Express, Angular, and Node.js. Users log in with JWT, get a role (Manager, Team Lead, or Employee), and manage tasks with live updates over Socket.io.
 
----
+**Live app**
 
-## Features
-
-### Authentication (Express + JWT + MongoDB)
-- Register with `username`, `email`, and `password`.
-- Login returns a JWT; the token is stored in the browser and sent on every API request.
-- All task routes are protected — only authenticated users can access them.
-
-### Role-based Authorization
-Three roles with a supervisor hierarchy (`Manager → Team Lead → Employee`):
-
-| Role | Capabilities |
+| | URL |
 | --- | --- |
-| **Manager** | See **all** users and tasks. Create, modify, and **reassign** tasks to anyone (including self). Lands on **Teams** view showing team leads and their tasks. |
-| **Team Lead** | See, modify, and assign tasks for **team members** or self. Tasks are grouped by member in an accordion. |
-| **Employee** | Create and modify **own** tasks only. New tasks auto-assign to self. Cannot delete tasks. |
-
-### Task Management (MongoDB + Express)
-- Mongoose schema: `title`, `description`, `status` (`pending` / `completed`), `createdAt`, `updatedAt`, `assignedTo`, `createdBy`.
-- Full CRUD with role-based scoping on read, update, and delete.
-
-### Frontend (Angular)
-- Responsive dashboard with sidebar navigation, stats strip, and accordion-based organization.
-- Register and login with **reactive form validation**.
-- View, add, edit, and delete tasks (delete hidden for employees).
-- Toggle task complete via checkbox; **filter by status** (All / Pending / Done).
-- Role-aware **Assign to** dropdown in the task modal.
-- **You** badge on tasks assigned to the logged-in user (Manager / Team Lead views).
-
-### Real-time Updates (Bonus)
-- Socket.io broadcasts `task:created`, `task:updated`, and `task:deleted` events.
-- Connected clients refresh their task list automatically (e.g. employee edits appear for Manager / Team Lead).
+| Frontend | https://task-flow-task-tracker.vercel.app |
+| Backend API | https://taskflow-task-tracker.onrender.com |
+| Health check | https://taskflow-task-tracker.onrender.com/api/health |
 
 ---
 
-## Project Structure
+## Test accounts
 
-```
-Task Manager/
-├── README.md
-├── backend/
-│   ├── index.js              # Express entry, CORS, health, Socket.io, DB, routes
-│   ├── seed.js               # npm run seed — demo users + sample tasks
-│   ├── .env.example
-│   └── src/
-│       ├── config/
-│       │   ├── db.config.js      # MongoDB (Atlas/local) or in-memory fallback
-│       │   └── socket.config.js
-│       ├── controllers/
-│       │   ├── auth.controller.js
-│       │   ├── user.controller.js
-│       │   └── task.controller.js
-│       ├── helpers/
-│       │   └── scope.helper.js   # Role-based scope (who can see/assign/edit)
-│       ├── middlewares/
-│       │   ├── auth.middleware.js
-│       │   ├── io.middleware.js
-│       │   └── error.middleware.js
-│       ├── models/
-│       │   ├── user.model.js
-│       │   └── task.model.js
-│       └── routes.js
-│
-└── frontend/
-    └── src/app/
-        ├── api.service.ts    # API URLs, auth, tasks, Socket.io
-        ├── auth.ts           # Route guards + JWT interceptor
-        ├── app.ts / app.html # Top navbar shell
-        ├── login/
-        ├── register/
-        └── dashboard/        # Role-aware task UI
-```
-
-### Backend convention
-- Each controller defines an `express.Router()`, mounts routes inline, and uses `app.use("/", apiRouter)`.
-- Live updates are emitted via `req.io` (attached by `io.middleware.js`).
-- Shared authorization logic lives in `helpers/scope.helper.js`.
-
-### Frontend convention
-- **`api.service.ts`** — single service for auth, HTTP, and sockets.
-- **`auth.ts`** — guest/auth guards and JWT interceptor (401 → logout).
-- **`dashboard/`** — Manager, Team Lead, and Employee views driven by role.
-
----
-
-## Prerequisites
-
-- **Node.js** 20.19+ or 22.12+ (tested on Node 22).
-- **npm** 10+.
-- MongoDB is **optional** for local dev (in-memory fallback available).
-
----
-
-## Getting Started
-
-### 1. Backend
-
-```bash
-cd backend
-npm install
-```
-
-Copy environment file:
-
-```bash
-# macOS / Linux
-cp .env.example .env
-
-# Windows
-copy .env.example .env
-```
-
-Start the API:
-
-```bash
-npm start
-# or with auto-reload:
-npm run dev
-```
-
-API: **http://localhost:5000**  
-Health: **GET http://localhost:5000/api/health** → `{ "status": "ok" }`
-
-#### Database options
-
-| Option | Setup |
-| --- | --- |
-| **In-memory (zero config)** | Leave `MONGO_URI` empty in `.env`. Data is lost on restart. |
-| **Local MongoDB** | `MONGO_URI=mongodb://127.0.0.1:27017/task_manager` |
-| **MongoDB Atlas** | `MONGO_URI=mongodb+srv://<user>:<pass>@<cluster>.mongodb.net/<dbname>` |
-
-#### Seed demo data
-
-Requires a real `MONGO_URI` (not in-memory):
-
-```bash
-cd backend
-npm run seed
-```
-
-Creates three users and sample tasks. **Re-running seed clears all users and tasks.**
+Run the seed script first (see below), then log in with any of these. Password is the same for all three.
 
 | Role | Email | Password |
 | --- | --- | --- |
@@ -151,126 +22,186 @@ Creates three users and sample tasks. **Re-running seed clears all users and tas
 | Team Lead | `lead@test.com` | `password123` |
 | Employee | `employee@test.com` | `password123` |
 
-### 2. Frontend
+### What to try after login
+
+**Manager** (`manager@test.com`)
+
+1. Lands on **Teams** — expand a team lead to see their tasks and reassign work.
+2. Open **All Tasks** for the full list with status filters.
+3. Open **People** to browse users by role.
+4. Use **+ New Task** to create tasks and assign them to anyone.
+
+**Team Lead** (`lead@test.com`)
+
+1. **Tasks** tab — tasks grouped by team member; filter by member from the dropdown.
+2. **Team** tab — list of people you manage.
+3. Can assign tasks to yourself or employees on your team.
+
+**Employee** (`employee@test.com`)
+
+1. Single task view (no top tabs).
+2. Can create, edit, and mark tasks complete.
+3. Delete is hidden — the API returns 403 if attempted.
+
+On all roles, click your **name** in the top bar to see your name and email. **Logout** is on the right (turns red on hover).
+
+---
+
+## Local setup
+
+You need Node.js 20+ and a MongoDB connection string (Atlas or local).
+
+### 1. Clone and install
 
 ```bash
-cd frontend
+git clone https://github.com/hasanOnGit/TaskFlow-Task-Tracker.git
+cd TaskFlow-Task-Tracker
+```
+
+```bash
+cd backend
+npm install
+copy .env.example .env
+```
+
+Edit `backend/.env` and set at least:
+
+```env
+MONGO_URI=mongodb+srv://...
+JWT_SECRET=your_secret_here
+CLIENT_ORIGIN=http://localhost:4200
+```
+
+### 2. Seed the database
+
+```bash
+cd backend
+npm run seed
+```
+
+This wipes existing users/tasks in that database and creates the three test accounts plus sample tasks. Safe to run again when you want a clean slate.
+
+### 3. Start the backend
+
+```bash
+npm start
+```
+
+API runs on http://localhost:5000
+
+### 4. Start the frontend
+
+```bash
+cd ../frontend
 npm install
 npm start
 ```
 
-Open **http://localhost:4200**. The app calls the backend at `http://localhost:5000` (CORS enabled).
+Open http://localhost:4200 and log in with one of the test accounts above.
+
+Local API URLs are in `frontend/src/environments/environment.ts`. Production URLs are in `environment.prod.ts`.
 
 ---
 
-## Environment Variables (backend `.env`)
+## Project layout
 
-| Variable | Description | Default |
-| --- | --- | --- |
-| `PORT` | API port | `5000` |
-| `CLIENT_ORIGIN` | Allowed CORS origin | `http://localhost:4200` |
-| `JWT_SECRET` | JWT signing secret | `super_secret_change_me` |
-| `JWT_EXPIRES_IN` | Token lifetime | `7d` |
-| `MONGO_URI` | MongoDB URI (empty = in-memory) | _empty_ |
-
-> **Do not commit `.env`** — it may contain database credentials. Use `.env.example` as a template.
-
-> For deployment or custom ports, update `API_BASE` and `SOCKET_URL` in `frontend/src/app/api.service.ts`.
+```
+Task Manager/
+├── backend/          Express API, JWT, Socket.io
+│   ├── index.js
+│   ├── seed.js
+│   └── src/
+│       ├── config/       db, socket, cors
+│       ├── controllers/  auth, users, tasks
+│       ├── helpers/      role scoping
+│       ├── middlewares/
+│       └── models/
+└── frontend/         Angular 21 app
+    └── src/app/
+        ├── api.service.ts
+        ├── auth.ts
+        ├── login/ register/
+        └── dashboard/
+```
 
 ---
 
-## API Reference
+## Roles
 
-### Health
-| Method | Endpoint | Auth | Description |
+| Role | Can see | Can assign to | Delete tasks |
 | --- | --- | --- | --- |
-| GET | `/api/health` | – | Server health check |
+| Manager | Everyone, all tasks | Anyone | Yes |
+| Team Lead | Self + direct reports | Self + team members | Yes |
+| Employee | Own tasks | Self only (auto on create) | No |
 
-### Auth — `/api/auth`
-| Method | Endpoint | Auth | Description |
-| --- | --- | --- | --- |
-| POST | `/register` | – | Register (`username`, `email`, `password`, optional `role`, `managerId`) |
-| POST | `/login` | – | Login → `{ token, user }` |
-| GET | `/me` | ✅ | Current user |
-| GET | `/public-users` | – | Managers & team leads (registration hierarchy) |
+Hierarchy: Manager → Team Lead → Employee (via `manager` field on the user model).
 
-### Users — `/api/users` (auth required)
-| Method | Endpoint | Description |
+---
+
+## Deployment
+
+Single repo, two hosts:
+
+| Part | Host | Root directory |
 | --- | --- | --- |
-| GET | `/` | Users visible to current role |
-| GET | `/assignable` | Users current role can assign tasks to |
-| GET | `/team-leads` | Manager only: list team leads |
+| Frontend | Vercel | `frontend` |
+| Backend | Render | `backend` |
+| Database | MongoDB Atlas | — |
 
-### Tasks — `/api/tasks` (auth required)
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| GET | `/?status=pending\|completed` | Tasks in role scope (optional filter) |
-| POST | `/` | Create task |
-| PUT | `/:id` | Update / reassign task |
-| DELETE | `/:id` | Delete task (employees blocked) |
+### Render (backend)
 
----
+- **Build command:** `npm install`
+- **Start command:** `node index.js`
+- **Environment variables:**
 
-## Dashboard by Role
-
-### Manager
-- **Teams** (default) — accordion per team lead with tasks; inline reassign dropdown + edit.
-- **All Tasks** — full task table with status filters; **You** badge on self-assigned tasks.
-- **People** — accordion grouped by role (Managers, Team Leads, Employees).
-
-### Team Lead
-- **Tasks** — accordion per team member; member filter dropdown; **You** badge on own section.
-- **Team** — team members listed by role.
-
-### Employee
-- Single task list with create, edit, complete toggle, and status filters (no delete).
-
----
-
-## How It Works
-
-1. User registers or logs in → JWT stored → attached to every HTTP request.
-2. Dashboard loads tasks scoped by role via `scope.helper.js`.
-3. Create / edit / delete hits the API → permissions checked → MongoDB updated → Socket.io event emitted.
-4. All connected clients refresh their task list on socket events.
-
----
-
-## Tech Stack
-
-| Layer | Technologies |
+| Variable | Example |
 | --- | --- |
-| **Backend** | Node.js, Express (CommonJS), Mongoose, JWT, bcryptjs, Socket.io, mongodb-memory-server |
-| **Frontend** | Angular 21 (standalone, signals), RxJS, socket.io-client |
-| **Database** | MongoDB (Atlas / local / in-memory) |
+| `MONGO_URI` | Atlas connection string |
+| `JWT_SECRET` | long random string |
+| `CLIENT_ORIGIN` | `https://task-flow-task-tracker.vercel.app` (no trailing slash) |
+
+### Vercel (frontend)
+
+- **Root directory:** `frontend`
+- **Build command:** `npm run build`
+- **Output directory:** `dist/frontend/browser`
+
+Update `frontend/src/environments/environment.prod.ts` with your Render API URL before deploying.
+
+### CORS notes
+
+`CLIENT_ORIGIN` must match your Vercel URL exactly. The backend also allows `*.vercel.app` preview URLs. If login fails with a CORS error, double-check that env var on Render and redeploy.
 
 ---
 
-## Deployment (Optional Bonus)
+## API (quick reference)
 
-1. Create a **MongoDB Atlas** cluster and set `MONGO_URI` on the host.
-2. Deploy the backend (Render, Railway, Heroku, AWS, etc.) with env vars from `.env.example`.
-3. Build the frontend: `cd frontend && npm run build` → serve `dist/frontend`.
-4. Set `API_BASE` and `SOCKET_URL` in `api.service.ts` to your production API URL.
-5. Set `CLIENT_ORIGIN` on the backend to your frontend URL.
+**Auth** — `/api/auth`
+
+- `POST /register` — create account
+- `POST /login` — returns `{ token, user }`
+- `GET /me` — current user (auth required)
+
+**Users** — `/api/users` (auth required)
+
+- `GET /` — users visible to your role
+- `GET /assignable` — users you can assign tasks to
+- `GET /team-leads` — manager only
+
+**Tasks** — `/api/tasks` (auth required)
+
+- `GET /?status=pending|completed` — list tasks
+- `POST /` — create
+- `PUT /:id` — update / reassign
+- `DELETE /:id` — delete (employees blocked)
 
 ---
 
-## Machine Test Checklist
+## Tech stack
 
-| Requirement | Status |
-| --- | --- |
-| MEAN stack | ✅ |
-| Register / Login + JWT | ✅ |
-| Protected task routes | ✅ |
-| 3 roles with correct permissions | ✅ |
-| Manager sees team leads + tasks on login | ✅ |
-| Task CRUD + status filter | ✅ |
-| Angular forms + validation | ✅ |
-| Responsive UI | ✅ |
-| Real-time WebSocket updates | ✅ |
-| README with local setup | ✅ |
-| Cloud deployment | ❌ Not deployed |
+- **Backend:** Express, Mongoose, JWT, bcryptjs, Socket.io
+- **Frontend:** Angular 21, RxJS, socket.io-client
+- **Database:** MongoDB Atlas
 
 ---
 
